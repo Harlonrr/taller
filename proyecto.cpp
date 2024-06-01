@@ -1,23 +1,19 @@
 #include <iostream>
-#include <string>
 #include <queue>
-#include <limits>
 
 using namespace std;
 
-// Struct for passengers
 struct Pasajero {
     string nombre;
 };
 
-// Struct for trips (nodo)
 struct Viaje {
-    string id;
-    string matricula;
-    string nombreEmbarcacion;
-    string fecha; // Format: YYYYMMDD
+    char id[50];
+    char matricula[50];
+    char nombreEmbarcacion[50];
+    char fecha[9]; // Formato: YYYYMMDD
     float precio;
-    string destino;
+    char destino[50];
     int capacidad;
     queue<Pasajero> pasajeros;
     Viaje* izq;
@@ -25,15 +21,18 @@ struct Viaje {
     int altura;
 };
 
-// Function to create a new trip
-Viaje* crearViaje(string id, string matricula, string nombreEmbarcacion, string fecha, float precio, string destino, int capacidad) {
-    Viaje* nuevoViaje = new Viaje();
-    nuevoViaje->id = id;
-    nuevoViaje->matricula = matricula;
-    nuevoViaje->nombreEmbarcacion = nombreEmbarcacion;
-    nuevoViaje->fecha = fecha;
+Viaje* crearViaje(const char* id, const char* matricula, const char* nombreEmbarcacion, const char* fecha, float precio, const char* destino, int capacidad) {
+    Viaje* nuevoViaje = (Viaje*) malloc(sizeof(Viaje));
+    for (int i = 0; i < 50; ++i) {
+        nuevoViaje->id[i] = id[i];
+        nuevoViaje->matricula[i] = matricula[i];
+        nuevoViaje->nombreEmbarcacion[i] = nombreEmbarcacion[i];
+        nuevoViaje->destino[i] = destino[i];
+    }
+    for (int i = 0; i < 9; ++i) {
+        nuevoViaje->fecha[i] = fecha[i];
+    }
     nuevoViaje->precio = precio;
-    nuevoViaje->destino = destino;
     nuevoViaje->capacidad = capacidad;
     nuevoViaje->izq = nullptr;
     nuevoViaje->der = nullptr;
@@ -41,7 +40,6 @@ Viaje* crearViaje(string id, string matricula, string nombreEmbarcacion, string 
     return nuevoViaje;
 }
 
-// Function to get the height of a node
 int obtenerAltura(Viaje* v) {
     if (v == nullptr) {
         return 0;
@@ -49,12 +47,10 @@ int obtenerAltura(Viaje* v) {
     return v->altura;
 }
 
-// Function to get the maximum of two integers
 int mayor(int a, int b) {
     return (a > b) ? a : b;
 }
 
-// Function to get the balance factor of a node
 int obtenerBalance(Viaje* v) {
     if (v == nullptr) {
         return 0;
@@ -62,7 +58,6 @@ int obtenerBalance(Viaje* v) {
     return obtenerAltura(v->izq) - obtenerAltura(v->der);
 }
 
-// Function to right rotate a subtree rooted with y
 Viaje* rotarDerecha(Viaje* y) {
     Viaje* x = y->izq;
     Viaje* T2 = x->der;
@@ -76,7 +71,6 @@ Viaje* rotarDerecha(Viaje* y) {
     return x;
 }
 
-// Function to left rotate a subtree rooted with x
 Viaje* rotarIzquierda(Viaje* x) {
     Viaje* y = x->der;
     Viaje* T2 = y->izq;
@@ -90,15 +84,14 @@ Viaje* rotarIzquierda(Viaje* x) {
     return y;
 }
 
-// Function to insert a new trip into the AVL tree
-Viaje* insertar(Viaje* nodo, string id, string matricula, string nombreEmbarcacion, string fecha, float precio, string destino, int capacidad) {
+Viaje* insertar(Viaje* nodo, const char* id, const char* matricula, const char* nombreEmbarcacion, const char* fecha, float precio, const char* destino, int capacidad) {
     if (nodo == nullptr) {
         return crearViaje(id, matricula, nombreEmbarcacion, fecha, precio, destino, capacidad);
     }
 
-    if (id < nodo->id) {
+    if (string(id) < string(nodo->id)) {
         nodo->izq = insertar(nodo->izq, id, matricula, nombreEmbarcacion, fecha, precio, destino, capacidad);
-    } else if (id > nodo->id) {
+    } else if (string(id) > string(nodo->id)) {
         nodo->der = insertar(nodo->der, id, matricula, nombreEmbarcacion, fecha, precio, destino, capacidad);
     } else {
         return nodo;
@@ -108,20 +101,20 @@ Viaje* insertar(Viaje* nodo, string id, string matricula, string nombreEmbarcaci
 
     int balance = obtenerBalance(nodo);
 
-    if (balance > 1 && id < nodo->izq->id) {
+    if (balance > 1 && string(id) < string(nodo->izq->id)) {
         return rotarDerecha(nodo);
     }
 
-    if (balance < -1 && id > nodo->der->id) {
+    if (balance < -1 && string(id) > string(nodo->der->id)) {
         return rotarIzquierda(nodo);
     }
 
-    if (balance > 1 && id > nodo->izq->id) {
+    if (balance > 1 && string(id) > string(nodo->izq->id)) {
         nodo->izq = rotarIzquierda(nodo->izq);
         return rotarDerecha(nodo);
     }
 
-    if (balance < -1 && id < nodo->der->id) {
+    if (balance < -1 && string(id) < string(nodo->der->id)) {
         nodo->der = rotarDerecha(nodo->der);
         return rotarIzquierda(nodo);
     }
@@ -129,20 +122,18 @@ Viaje* insertar(Viaje* nodo, string id, string matricula, string nombreEmbarcaci
     return nodo;
 }
 
-// Function to find a trip by its ID
-Viaje* buscar(Viaje* raiz, string id) {
-    if (raiz == nullptr || raiz->id == id) {
+Viaje* buscar(Viaje* raiz, const char* id) {
+    if (raiz == nullptr || string(raiz->id) == string(id)) {
         return raiz;
     }
 
-    if (raiz->id < id) {
+    if (string(raiz->id) < string(id)) {
         return buscar(raiz->der, id);
     }
 
     return buscar(raiz->izq, id);
 }
 
-// Function to perform an in-order traversal to list all trips
 void inOrden(Viaje* raiz) {
     if (raiz != nullptr) {
         inOrden(raiz->izq);
@@ -151,62 +142,14 @@ void inOrden(Viaje* raiz) {
     }
 }
 
-// Function to delete the entire tree
-void deleteTree(Viaje* raiz) {
-    if (raiz != nullptr) {
-        deleteTree(raiz->izq);
-        deleteTree(raiz->der);
-        delete raiz;
-    }
-}
-
-// Function to generate a unique trip ID
-string generarId(string matricula, string fecha) {
-    return matricula.substr(0, 2) + fecha;
-}
-
-// Function to register a new passenger
-bool registrarPasajero(Viaje* raiz, string id, string nombre) {
-    Viaje* viaje = buscar(raiz, id);
-    if (viaje != nullptr) {
-        if (viaje->pasajeros.size() < viaje->capacidad) {
-            Pasajero pasajero = {nombre};
-            viaje->pasajeros.push(pasajero);
-            return true;
-        } else {
-            cout << "Capacidad maxima alcanzada para este viaje." << endl;
-        }
-    } else {
-        cout << "Viaje no encontrado." << endl;
-    }
-    return false;
-}
-
-// Function to list all passengers for a trip
-void listarPasajeros(Viaje* raiz, string id) {
-    Viaje* viaje = buscar(raiz, id);
-    if (viaje != nullptr) {
-        queue<Pasajero> tempQueue = viaje->pasajeros;
-        while (!tempQueue.empty()) {
-            Pasajero pasajero = tempQueue.front();
-            cout << pasajero.nombre << " ";
-            tempQueue.pop();
-        }
-        cout << endl;
-    } else {
-        cout << "Viaje no encontrado." << endl;
-    }
-}
-
-// Function to delete a node in AVL tree
-Viaje* eliminarViaje(Viaje* raiz, string id) {
+Viaje* eliminarViaje(Viaje* raiz, const char* id) {
     if (raiz == nullptr) {
         return raiz;
     }
 
-    if (id < raiz->id) {
+    if (string(id) < string(raiz->id)) {
         raiz->izq = eliminarViaje(raiz->izq, id);
-    } else if (id > raiz->id) {
+    } else if (string(id) > string(raiz->id)) {
         raiz->der = eliminarViaje(raiz->der, id);
     } else {
         if ((raiz->izq == nullptr) || (raiz->der == nullptr)) {
@@ -219,19 +162,23 @@ Viaje* eliminarViaje(Viaje* raiz, string id) {
                 *raiz = *temp;
             }
 
-            delete temp;
+            free(temp);
         } else {
             Viaje* temp = raiz->der;
             while (temp->izq != nullptr) {
                 temp = temp->izq;
             }
 
-            raiz->id = temp->id;
-            raiz->matricula = temp->matricula;
-            raiz->nombreEmbarcacion = temp->nombreEmbarcacion;
-            raiz->fecha = temp->fecha;
+            for (int i = 0; i < 50; ++i) {
+                raiz->id[i] = temp->id[i];
+                raiz->matricula[i] = temp->matricula[i];
+                raiz->nombreEmbarcacion[i] = temp->nombreEmbarcacion[i];
+                raiz->destino[i] = temp->destino[i];
+            }
+            for (int i = 0; i < 9; ++i) {
+                raiz->fecha[i] = temp->fecha[i];
+            }
             raiz->precio = temp->precio;
-            raiz->destino = temp->destino;
             raiz->capacidad = temp->capacidad;
             raiz->pasajeros = temp->pasajeros;
 
@@ -268,6 +215,47 @@ Viaje* eliminarViaje(Viaje* raiz, string id) {
     return raiz;
 }
 
+bool registrarPasajero(Viaje* raiz, const char* id, const char* nombre) {
+    Viaje* viaje = buscar(raiz, id);
+    if (viaje != nullptr) {
+        if (viaje->pasajeros.size() < viaje->capacidad) {
+            Pasajero pasajero = {nombre};
+            viaje->pasajeros.push(pasajero);
+            return true;
+        } else {
+            cout << "Capacidad maxima alcanzada para este viaje." << endl;
+        }
+    } else {
+        cout << "Viaje no encontrado." << endl;
+    }
+    return false;
+}
+
+void listarPasajeros(Viaje* raiz, const char* id) {
+    Viaje* viaje = buscar(raiz, id);
+    if (viaje != nullptr) {
+        queue<Pasajero> tempQueue = viaje->pasajeros;
+        while (!tempQueue.empty()) {
+            Pasajero p = tempQueue.front();
+            tempQueue.pop();
+            cout << p.nombre << endl;
+        }
+    } else {
+        cout << "Viaje no encontrado." << endl;
+    }
+}
+
+void generarId(char* id, const char* matricula, const char* fecha) {
+    int i = 0;
+    for (; i < 2; ++i) {
+        id[i] = matricula[i];
+    }
+    for (int j = 0; j < 8; ++j, ++i) {
+        id[i] = fecha[j];
+    }
+    id[i] = '\0';
+}
+
 int main() {
     Viaje* raiz = nullptr;
     int opc = 0;
@@ -285,7 +273,7 @@ int main() {
 
         switch (opc) {
             case 1: {
-                string matricula, nombreEmbarcacion, fecha, destino;
+                char matricula[50], nombreEmbarcacion[50], fecha[9], destino[50];
                 float precio;
                 int capacidad;
                 cout << "Matricula de la embarcacion: ";
@@ -301,12 +289,13 @@ int main() {
                 cout << "Capacidad de la embarcacion: ";
                 cin >> capacidad;
 
-                string id = generarId(matricula, fecha);
+                char id[50];
+                generarId(id, matricula, fecha);
                 raiz = insertar(raiz, id, matricula, nombreEmbarcacion, fecha, precio, destino, capacidad);
                 break;
             }
             case 2: {
-                string id;
+                char id[50];
                 cout << "ID del viaje: ";
                 cin >> id;
                 Viaje* viaje = buscar(raiz, id);
@@ -322,14 +311,14 @@ int main() {
                 inOrden(raiz);
                 break;
             case 4: {
-                string id;
+                char id[50];
                 cout << "ID del viaje: ";
                 cin >> id;
                 raiz = eliminarViaje(raiz, id);
                 break;
             }
             case 5: {
-                string id, nombre;
+                char id[50], nombre[50];
                 cout << "ID del viaje: ";
                 cin >> id;
                 cout << "Nombre del pasajero: ";
@@ -340,7 +329,7 @@ int main() {
                 break;
             }
             case 6: {
-                string id;
+                char id[50];
                 cout << "ID del viaje: ";
                 cin >> id;
                 cout << "Lista de pasajeros:" << endl;
@@ -356,6 +345,11 @@ int main() {
         }
     } while (opc != 7);
 
-    deleteTree(raiz);
+    // Liberar memoria del árbol AVL
+    while (raiz != nullptr) {
+        raiz = eliminarViaje(raiz, raiz->id);
+    }
+    
     return 0;
 }
+
